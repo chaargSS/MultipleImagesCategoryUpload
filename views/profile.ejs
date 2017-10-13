@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Profile</title>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+        <!-- Latest compiled JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+   <br><br>
+<div class="container">
+	<div class="row">  
+        <div class="col-sm-8">
+            <h3 id="welcome">Welcome: <%= name %></h3>          
+        </div>
+       
+    </div>    
+    <div class="row">  
+        <div class="col-sm-8">
+            <a href="/"><span class="icon-trash"></span> Logout</a>        
+        </div>
+    </div>
+    <hr>
+      
+      
+            <div class="col-sm-8">
+            <button id="Itembtn" type="button" class="btn-primary" >Post Item</button>  
+            <button id="getItembtn" type="button" class="btn-primary" >Get Item</button>      
+            </div>   
+    
+    <br />
+    <br />
+    <br />
+        <div id="postItem">
+            <form id="itemform" enctype="multipart/form-data"> 
+                        <label><b>Title:</b></label>
+                        <input id="title" type="text" placeholder="Enter Title" name="title" required> <br> <br>              
+                        <label><b> Select category: </b></label>
+                        <select id="categ" name="category">
+                            <option ></option>
+                            <option value="cars">Cars</option>
+                            <option value="Games">Games</option>
+                            <option value="Bikes">Bikes</option>
+                            <option value="Planes">Planes</option>
+                            <option value="Tv series">Tv series</option>    
+                        </select> 
+                        <input type="text" name="name" value="<%= name %>" hidden>
+                        
+                        <br />
+                        <br />
+                        <label><b> Select Images: </b></label>
+                        <input id="img" type="file" name="img" multiple>
+                        <br />
+                        <br />
+                        <input type="submit"   >          
+                </form>
+            </div>   
+            
+            <div id="getItem">
+                <form id="getitemform" enctype="multipart/form-data">  
+                            <label><b> Select category: </b></label>
+                            <select name="category">                                 
+                                <option ></option>
+                                <option value="cars">Cars</option>
+                                <option value="Games">Games</option>
+                                <option value="Bikes">Bikes</option>
+                                <option value="Planes">Planes</option>
+                                <option value="Tv series">Tv series</option>    
+                            </select> 
+                            <input type="text" name="name" value="<%= name %>" hidden>
+                            <input type="submit"   > 
+                </form>
+
+            </div>
+            <div id="showitem">
+             
+   
+               
+
+            </div>
+          
+</div>
+<script>
+        
+        $(document).ready(function(){
+          //hide div
+          
+            $('#postItem').hide();
+            $('#getitemform').hide();
+          //show div   
+            $('#Itembtn').click(function(){
+                $('#title').val('');
+                $('#categ').val('');
+                $('#img').val('');
+                $('#postItem').show();
+                $('#showitem').hide();
+                $('#getItem').hide();
+                
+            })
+         
+            //get item ajax
+            $('#getItembtn').click(function(){
+                $('#getItem').show();
+                $('#showitem').show();
+                $('#postItem').hide();
+                $('#getitemform').show();
+                $.ajax({
+                        url:"/SearchItem",                       
+                        method:'post',
+                        data:{name:'<%= name %>'},
+                        success:function(user){
+                            console.log(user);  
+                            var html=`<table id="table" class="table table-bordered" >
+                                    <thead>
+                                        <tr>
+                                           <th class="col-sm-2">Title</th>
+                                            <th >Images</th>                                                                                    
+                                         </tr>
+                                     </thead>
+                                      <tbody>
+                                        `;
+                         for(var i=0 ; i<user.result.length; i++){
+                              html +=`<tr>
+                                    <td class="col-sm-2">${user.result[i].Title}</td>
+                                    <td >`;
+                                    var images=user.out[i];
+                                    console.log(user.out[i].length);
+                               for(var j=0;j<user.out[i].length-1;j++){
+                                   html +=` <img src="/images/${images[j]}" class="img-rounded" alt="${images[j]}" width="150" height="118"> `;
+                               }   
+                               html +=`</td>
+                                    </tr>`;
+                                   
+                          }
+                          html +=`</tbody>
+                                  </table>`;
+                             $('#showitem').html(html);
+                            
+                        },
+                        
+                    })
+            })
+            
+            //save item images ajax
+
+           $('#itemform').on('submit',function(e){
+              e.preventDefault();
+              var form = new FormData($('#itemform')[0]);
+                    $.ajax({
+                        url:"/itemSave",                       
+                        method:'post',
+                        data:form,
+                        processData: false,
+                       contentType: false,
+                        success:function(response){
+                            console.log(response);
+                            $('#postItem').hide();
+                        },
+                        error: function(er){}
+                    })
+           })
+      // search item ajax
+           $('#getitemform').on('submit',function(e){
+
+              e.preventDefault();
+                    $.ajax({
+                        url:"/SearchFilter",                       
+                        method:'post',
+                        data:$(this).serialize(),
+                        success:function(user){
+                            
+                           // console.log(user);
+                           if(user.status==true){
+                            var html=`<table id="table" class="table table-bordered" >
+                                      <tbody>
+                                            <tr><td class="col-sm-2" > `;
+                          for(var i=0 ; i<user.data.length-1; i++){
+                              html +=`
+                                     "<img src="/images/${user.data[i]}" class="img-rounded" alt="${user.data[i]}" width="304" height="236"> 
+                                    `;
+                          }
+                          html +=`</td></tr></tbody>
+                                  </table>`;
+
+                        $('#showitem').html(html);
+                           }
+                           else{
+                            $('#showitem').html('No Item is uploaded in this category');
+                           }
+                              
+                            
+                        },
+                        
+                    })
+           })
+            
+
+        });
+
+     
+       
+
+</script>
+
+
+  </body>
+</html>

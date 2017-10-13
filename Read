@@ -1,0 +1,4 @@
+run db.sql
+
+npm install 
+npm start
